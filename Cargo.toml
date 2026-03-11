@@ -1,6 +1,6 @@
 [package]
 name = "airport-data"
-version = "1.0.1"
+version = "1.0.2"
 edition = "2021"
 authors = ["Aashish Vivekanand"]
 description = "A comprehensive Rust library for retrieving airport information by IATA codes, ICAO codes, and various other criteria"
