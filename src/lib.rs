@@ -271,8 +271,8 @@ fn haversine_distance(lat1: f64, lon1: f64, lat2: f64, lon2: f64) -> f64 {
     let lat1_rad = lat1 * PI / 180.0;
     let lat2_rad = lat2 * PI / 180.0;
 
-    let a = (d_lat / 2.0).sin().powi(2)
-        + lat1_rad.cos() * lat2_rad.cos() * (d_lon / 2.0).sin().powi(2);
+    let a =
+        (d_lat / 2.0).sin().powi(2) + lat1_rad.cos() * lat2_rad.cos() * (d_lon / 2.0).sin().powi(2);
     let c = 2.0 * a.sqrt().asin();
     EARTH_RADIUS_KM * c
 }
@@ -467,7 +467,10 @@ impl AirportData {
         let a1 = self.resolve_airport(code1)?;
         let a2 = self.resolve_airport(code2)?;
         Ok(haversine_distance(
-            a1.latitude, a1.longitude, a2.latitude, a2.longitude,
+            a1.latitude,
+            a1.longitude,
+            a2.latitude,
+            a2.longitude,
         ))
     }
 
@@ -544,10 +547,7 @@ impl AirportData {
 
     /// Finds all airports within a specific timezone.
     pub fn get_airports_by_timezone(&self, timezone: &str) -> Vec<&Airport> {
-        AIRPORTS
-            .iter()
-            .filter(|a| a.timezone == timezone)
-            .collect()
+        AIRPORTS.iter().filter(|a| a.timezone == timezone).collect()
     }
 
     /// Finds airports matching multiple criteria.
@@ -575,8 +575,7 @@ impl AirportData {
         AIRPORTS
             .iter()
             .filter(|a| {
-                a.airport.to_lowercase().contains(&lower)
-                    || a.iata.to_lowercase().contains(&lower)
+                a.airport.to_lowercase().contains(&lower) || a.iata.to_lowercase().contains(&lower)
             })
             .take(10)
             .collect()
@@ -659,10 +658,7 @@ impl AirportData {
     }
 
     /// Gets comprehensive statistics about airports on a specific continent.
-    pub fn get_airport_stats_by_continent(
-        &self,
-        continent_code: &str,
-    ) -> Result<ContinentStats> {
+    pub fn get_airport_stats_by_continent(&self, continent_code: &str) -> Result<ContinentStats> {
         let airports = self.get_airports_by_continent(continent_code);
         if airports.is_empty() {
             return Err(AirportError::NotFound(format!(
@@ -809,9 +805,8 @@ impl AirportData {
                 if code1 == code2 {
                     inner.insert(code2.clone(), 0.0);
                 } else {
-                    let dist = haversine_distance(
-                        a1.latitude, a1.longitude, a2.latitude, a2.longitude,
-                    );
+                    let dist =
+                        haversine_distance(a1.latitude, a1.longitude, a2.latitude, a2.longitude);
                     inner.insert(code2.clone(), dist.round());
                 }
             }
@@ -1001,9 +996,7 @@ mod tests {
         let d = db();
         let airports = d.get_airports_by_type("airport");
         assert!(airports.len() > 50);
-        assert!(airports
-            .iter()
-            .all(|a| a.airport_type.contains("airport")));
+        assert!(airports.iter().all(|a| a.airport_type.contains("airport")));
     }
 
     #[test]
@@ -1267,9 +1260,7 @@ mod tests {
     #[test]
     fn test_distance_matrix() {
         let d = db();
-        let matrix = d
-            .calculate_distance_matrix(&["SIN", "LHR", "JFK"])
-            .unwrap();
+        let matrix = d.calculate_distance_matrix(&["SIN", "LHR", "JFK"]).unwrap();
         assert_eq!(matrix.airports.len(), 3);
 
         // Diagonal is zero
@@ -1312,9 +1303,7 @@ mod tests {
     #[test]
     fn test_find_nearest_airport_sin() {
         let d = db();
-        let nearest = d
-            .find_nearest_airport(1.35019, 103.994003, None)
-            .unwrap();
+        let nearest = d.find_nearest_airport(1.35019, 103.994003, None).unwrap();
         assert_eq!(nearest.airport.iata, "SIN");
         assert!(nearest.distance < 2.0);
     }
