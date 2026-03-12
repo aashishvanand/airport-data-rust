@@ -16,7 +16,7 @@ Add this to your `Cargo.toml`:
 
 ```toml
 [dependencies]
-airport-data = "0.1"
+airport-data = "1"
 ```
 
 ## Quick Start
@@ -162,6 +162,15 @@ Each `Airport` struct contains:
 ## How It Works
 
 The airport dataset (`airports.json`) is gzip-compressed at build time and embedded into the binary via `include_bytes!`. On first access, the data is decompressed and deserialized into memory, then cached for the lifetime of the process. The `AirportData` struct is zero-cost to construct.
+
+## Contributing
+
+Contributions are welcome! Please see [CONTRIBUTING.md](CONTRIBUTING.md) for:
+
+- Development setup and workflow
+- Commit message conventions
+- How to update airport data
+- How to publish a new version
 
 ## License
 
