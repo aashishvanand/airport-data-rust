@@ -44,7 +44,7 @@ static AIRPORTS: Lazy<Vec<Airport>> = Lazy::new(|| {
 // Custom deserializer helpers
 // ---------------------------------------------------------------------------
 
-/// Deserializes a value that can be an integer, float, or an empty string into Option<i64>.
+/// Deserializes a value that can be an integer, float, empty string, or null into Option<i64>.
 fn deserialize_opt_i64<'de, D>(deserializer: D) -> std::result::Result<Option<i64>, D::Error>
 where
     D: Deserializer<'de>,
@@ -56,15 +56,16 @@ where
         Float(f64),
         Str(String),
     }
-    match NumOrStr::deserialize(deserializer)? {
-        NumOrStr::Int(n) => Ok(Some(n)),
-        NumOrStr::Float(f) => Ok(Some(f as i64)),
-        NumOrStr::Str(s) if s.is_empty() => Ok(None),
-        NumOrStr::Str(s) => s.parse::<i64>().ok().map_or(Ok(None), |n| Ok(Some(n))),
+    match Option::<NumOrStr>::deserialize(deserializer)? {
+        None => Ok(None),
+        Some(NumOrStr::Int(n)) => Ok(Some(n)),
+        Some(NumOrStr::Float(f)) => Ok(Some(f as i64)),
+        Some(NumOrStr::Str(s)) if s.is_empty() => Ok(None),
+        Some(NumOrStr::Str(s)) => s.parse::<i64>().ok().map_or(Ok(None), |n| Ok(Some(n))),
     }
 }
 
-/// Deserializes a value that can be an integer, float, or an empty string into Option<f64>.
+/// Deserializes a value that can be an integer, float, empty string, or null into Option<f64>.
 fn deserialize_opt_f64<'de, D>(deserializer: D) -> std::result::Result<Option<f64>, D::Error>
 where
     D: Deserializer<'de>,
@@ -76,11 +77,12 @@ where
         Float(f64),
         Str(String),
     }
-    match NumOrStr::deserialize(deserializer)? {
-        NumOrStr::Int(n) => Ok(Some(n as f64)),
-        NumOrStr::Float(f) => Ok(Some(f)),
-        NumOrStr::Str(s) if s.is_empty() => Ok(None),
-        NumOrStr::Str(s) => s.parse::<f64>().ok().map_or(Ok(None), |n| Ok(Some(n))),
+    match Option::<NumOrStr>::deserialize(deserializer)? {
+        None => Ok(None),
+        Some(NumOrStr::Int(n)) => Ok(Some(n as f64)),
+        Some(NumOrStr::Float(f)) => Ok(Some(f)),
+        Some(NumOrStr::Str(s)) if s.is_empty() => Ok(None),
+        Some(NumOrStr::Str(s)) => s.parse::<f64>().ok().map_or(Ok(None), |n| Ok(Some(n))),
     }
 }
 
@@ -915,6 +917,23 @@ mod tests {
 
     fn db() -> AirportData {
         AirportData::new()
+    }
+
+    // ===================================================================
+    // Deserialization
+    // ===================================================================
+    #[test]
+    fn test_deserialize_null_and_empty_numeric_fields() {
+        let json = r#"[
+            {"iata":"AAA","icao":"AAAA","time":"UTC","utc":null,"country_code":"XX","continent":"EU","airport":"Null Airport","latitude":1.5,"longitude":2.5,"elevation_ft":null,"type":"small_airport","scheduled_service":"FALSE","wikipedia":"","website":"","runway_length":null,"flightradar24_url":"","radarbox_url":"","flightaware_url":""},
+            {"iata":"BBB","icao":"BBBB","time":"UTC","utc":"","country_code":"XX","continent":"EU","airport":"Empty Airport","latitude":1.5,"longitude":2.5,"elevation_ft":"","type":"small_airport","scheduled_service":"TRUE","wikipedia":"","website":"","runway_length":"","flightradar24_url":"","radarbox_url":"","flightaware_url":""}
+        ]"#;
+        let airports: Vec<Airport> = serde_json::from_str(json).unwrap();
+        for a in &airports {
+            assert_eq!(a.utc, None);
+            assert_eq!(a.elevation_ft, None);
+            assert_eq!(a.runway_length, None);
+        }
     }
 
     // ===================================================================
